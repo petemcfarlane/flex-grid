@@ -18,6 +18,28 @@ interface PriceChartProps {
   data: SettlementPeriod[];
 }
 
+// Custom Tooltip component
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div
+        style={{
+          backgroundColor: '#1e293b',
+          border: '1px solid #475569',
+          borderRadius: '8px',
+          padding: '8px',
+        }}
+      >
+        <p style={{ color: '#cbd5e1', margin: '0 0 4px 0' }}>{label}</p>
+        <p style={{ color: '#cbd5e1', margin: '0' }}>
+          {payload[0].value}p
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export const PriceChart: React.FC<PriceChartProps> = ({ data }) => {
   const currentPeriod = getCurrentPeriod();
 
@@ -47,7 +69,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data }) => {
   return (
     <div className="w-full h-64 bg-slate-800 rounded-lg p-4">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+        <BarChart data={chartData} margin={{ top: 20, right: 10, left: 15, bottom: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
           <XAxis
             dataKey="time"
@@ -55,19 +77,12 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data }) => {
             interval={3}
           />
           <YAxis
-            label={{ value: 'p/kWh', angle: -90, position: 'insideLeft' }}
+            label={{ value: 'p/kWh', angle: -90, position: 'insideLeft', dx: -10 }}
             tick={{ fill: '#cbd5e1', fontSize: 12 }}
             domain={[0, 40]}
+            width={30}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: '#1e293b',
-              border: '1px solid #475569',
-              borderRadius: '8px',
-            }}
-            labelStyle={{ color: '#cbd5e1' }}
-            formatter={(value: any) => [`${value}p`, 'Price']}
-          />
+          <Tooltip content={<CustomTooltip />} />
           <Bar dataKey="cost" radius={[4, 4, 0, 0]}>
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
