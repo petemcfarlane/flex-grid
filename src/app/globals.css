@@ -29,23 +29,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-* {
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-input,
-textarea,
-button {
-  -webkit-user-select: text;
-  user-select: text;
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -webkit-touch-callout: none;
   overflow-y: auto;
 }
