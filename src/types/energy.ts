@@ -3,8 +3,9 @@
  */
 
 export interface SettlementPeriod {
-  period: number; // 1-48
+  period: number; // Timestamp or 1-48
   time: string; // HH:mm format
+  timestamp?: string; // ISO timestamp for ordering
   cost: number; // pence per kWh
 }
 
