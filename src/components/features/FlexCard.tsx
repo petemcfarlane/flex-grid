@@ -44,7 +44,7 @@ export const FlexCard: React.FC<FlexCardProps> = ({ opportunity }) => {
         disabled={isPending}
         variant="primary"
         size="lg"
-        className="bg-emerald-400 hover:bg-emerald-500 text-gray-900 font-bold"
+        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
       >
         {isPending ? 'Opting in...' : '[Opt-In to Flex Event]'}
       </Button>

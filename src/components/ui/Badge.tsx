@@ -9,9 +9,9 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ variant = 'default', className = '', ...props }, ref) => {
     const variants = {
       default: 'bg-slate-700 text-slate-100',
-      success: 'bg-emerald-500 text-white',
-      warning: 'bg-amber-500 text-white',
-      error: 'bg-red-500 text-white',
+      success: 'bg-emerald-700 text-white',
+      warning: 'bg-amber-600 text-white',
+      error: 'bg-red-600 text-white',
     };
 
     return (
