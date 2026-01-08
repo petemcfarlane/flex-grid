@@ -280,8 +280,6 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
               'line-opacity': 0.8
             }
           });
-
-          console.log('Region layers added successfully');
         }
 
         // Now update feature states
