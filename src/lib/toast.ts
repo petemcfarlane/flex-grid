@@ -1,18 +1,20 @@
+import { useToastContext } from '@/components/ui/Toast';
+
 /**
  * Toast notification utility wrapper
  */
 export function useToast() {
+  const { addToast } = useToastContext();
+  
   return {
     success: (message: string) => {
-      // react-hot-toast will be configured globally
-      // This is a simple wrapper for now
-      console.log('✅', message);
+      addToast(message, 'success');
     },
     error: (message: string) => {
-      console.error('❌', message);
+      addToast(message, 'error');
     },
     info: (message: string) => {
-      console.log('ℹ️', message);
+      addToast(message, 'info');
     },
   };
 }
