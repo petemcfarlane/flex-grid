@@ -79,7 +79,7 @@ export default function MapPage() {
           <button
             onClick={handleShowRegions}
             disabled={loadingRegions}
-            className="absolute top-4 right-4 px-3 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white text-sm rounded font-medium transition-colors z-10"
+            className="absolute top-4 left-4 px-3 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white text-sm rounded font-medium transition-colors z-10"
           >
             {loadingRegions ? '...' : showRegions ? 'Hide Regions' : 'Show Regions'}
           </button>
