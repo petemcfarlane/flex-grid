@@ -1,65 +1,88 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React from 'react';
+import Link from 'next/link';
+import { useGridStatus, useTariffData, useFlexOpportunities } from '@/hooks/useEnergy';
+import { GridStatusCard } from '@/components/features/GridStatusCard';
+import { PriceChart } from '@/components/features/PriceChart';
+import { FlexCard } from '@/components/features/FlexCard';
+import { Card } from '@/components/ui';
+
+export default function DashboardPage() {
+  const { data: gridStatus, isLoading: gridLoading } = useGridStatus();
+  const { data: tariffData, isLoading: tariffLoading } = useTariffData();
+  const { data: flexOpp } = useFlexOpportunities();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-slate-950">
+      {/* Header */}
+      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 p-4 sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold text-white mb-2">Live Grid</h1>
+          <p className="text-slate-400 text-sm">Real-time energy settlement and flex opportunities</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto p-4 space-y-6 pb-20">
+        {/* Grid Status */}
+        <div>
+          <h2 className="text-lg font-semibold text-white mb-3">Grid Status</h2>
+          <GridStatusCard status={gridStatus} isLoading={gridLoading} />
         </div>
-      </main>
+
+        {/* Price Chart */}
+        <div>
+          <h2 className="text-lg font-semibold text-white mb-3">Real-time Price</h2>
+          {tariffLoading ? (
+            <Card className="h-64 bg-slate-800 animate-pulse" />
+          ) : tariffData ? (
+            <div className="space-y-2">
+              <PriceChart data={tariffData} />
+              <p className="text-xs text-slate-400">
+                Next price drop: 2:30 PM (8.1p)
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Flex Opportunity */}
+        {flexOpp && flexOpp.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold text-white mb-3">Flex Opportunity</h2>
+            <FlexCard opportunity={flexOpp[0]} />
+          </div>
+        )}
+
+        {/* Navigation to Map */}
+        <div>
+          <Link
+            href="/map"
+            className="inline-block w-full text-center py-3 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-medium transition-colors"
+          >
+            View Asset Map →
+          </Link>
+        </div>
+      </div>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around items-center h-16">
+        <button className="flex-1 flex flex-col items-center justify-center py-2 text-emerald-500 border-b-2 border-emerald-500">
+          <span className="text-xl">🏠</span>
+          <span className="text-xs font-medium mt-1">Home</span>
+        </button>
+        <Link
+          href="/map"
+          className="flex-1 flex flex-col items-center justify-center py-2 text-slate-400 hover:text-white transition-colors"
+        >
+          <span className="text-xl">🗺️</span>
+          <span className="text-xs font-medium mt-1">Map</span>
+        </Link>
+        <button className="flex-1 flex flex-col items-center justify-center py-2 text-slate-400 hover:text-white transition-colors">
+          <span className="text-xl">👤</span>
+          <span className="text-xs font-medium mt-1">Profile</span>
+        </button>
+      </nav>
     </div>
   );
 }
