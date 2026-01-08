@@ -5,6 +5,23 @@
   --foreground: #f1f5f9;
 }
 
+/* Override Mapbox popup styling */
+.dark-popup.mapboxgl-popup .mapboxgl-popup-content {
+  background-color: transparent;
+  padding: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.dark-popup.mapboxgl-popup .mapboxgl-popup-tip {
+  border-top-color: #1e293b;
+}
+
+/* Hide Mapbox logo */
+.mapboxgl-ctrl-logo {
+  display: none !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -30,17 +47,5 @@ body {
   font-family: var(--font-geist-sans), Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-touch-callout: none;
-  padding-bottom: 64px; /* Space for bottom nav */
-}
-
-html,
-body,
-#__next {
-  height: 100%;
-  width: 100%;
-}
-
-body {
   overflow-y: auto;
-  padding-top: 64px;
 }
