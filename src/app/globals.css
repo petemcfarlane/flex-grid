@@ -38,11 +38,9 @@ body,
 #__next {
   height: 100%;
   width: 100%;
-  overflow: hidden;
 }
 
-@supports (padding: max(0px)) {
-  body {
-    padding-bottom: max(64px, env(safe-area-inset-bottom));
-  }
+body {
+  overflow-y: auto;
+  padding-top: 64px;
 }
