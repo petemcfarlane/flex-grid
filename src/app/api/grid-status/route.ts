@@ -10,25 +10,28 @@ export async function GET() {
     });
 
     if (!response.ok) {
+      console.error('API returned non-ok status:', response.status);
       throw new Error(`API responded with ${response.status}`);
     }
 
-    // Check content type before parsing
-    const contentType = response.headers.get('content-type');
-    if (!contentType?.includes('application/json')) {
-      throw new Error('API did not return JSON');
-    }
-
     const data = await response.json();
+    
     return NextResponse.json(data);
   } catch (error) {
     console.error('Grid status API error:', error);
-    // Return fallback data
+    // Return fallback data in the same structure as the real API
     return NextResponse.json({
-      data: {
-        intensity: { actual: 150 },
-        generationmix: [],
-      },
+      data: [
+        {
+          from: new Date().toISOString(),
+          to: new Date(Date.now() + 30 * 60000).toISOString(),
+          intensity: { 
+            actual: 150,
+            forecast: 150,
+            index: 'low',
+          },
+        },
+      ],
     });
   }
 }

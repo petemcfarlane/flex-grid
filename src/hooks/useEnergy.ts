@@ -12,13 +12,22 @@ export function useGridStatus() {
     queryFn: async (): Promise<GridStatus> => {
       try {
         const response = await axios.get('/api/grid-status');
-        const data = response.data?.data || response.data;
-        const intensity = data?.intensity?.actual || data?.actual || 150;
+        const apiData = response.data?.data;
+        
+        // API returns { data: [{ intensity: { actual, forecast, index } }] }
+        let intensity = 150;
+        let status: 'low' | 'moderate' | 'high' = 'low';
+        
+        if (Array.isArray(apiData) && apiData.length > 0) {
+          intensity = apiData[0].intensity?.actual || 150;
+          status = apiData[0].intensity?.index || 'low';
+        }
+        
         return {
           intensity,
           carbonIntensity: intensity,
-          status: intensity > 300 ? 'high' : intensity > 200 ? 'moderate' : 'low',
-          generationmix: data?.generationmix || [],
+          status: status === 'high' ? 'high' : status === 'moderate' ? 'moderate' : 'low',
+          generationmix: [],
         };
       } catch (error) {
         // Fallback if API is unavailable
