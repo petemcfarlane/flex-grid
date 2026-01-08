@@ -64,7 +64,11 @@ export const AssetCard: React.FC<AssetCardProps> = ({ asset, onToggle }) => {
       <div>
         <button
           onClick={() => onToggle?.(asset.id)}
-          className="w-12 h-6 bg-slate-700 rounded-full relative transition-colors hover:bg-slate-600"
+          className={`w-12 h-6 rounded-full relative transition-colors ${
+            asset.status === 'charging' || asset.status === 'optimized'
+              ? 'bg-emerald-600 hover:bg-emerald-700'
+              : 'bg-slate-700 hover:bg-slate-600'
+          }`}
           aria-label={`Toggle ${asset.name}`}
         >
           <div
