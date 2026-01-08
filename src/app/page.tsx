@@ -3,6 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { useGridStatus, useTariffData, useFlexOpportunities } from '@/hooks/useEnergy';
+
+import { Header } from '@/components/features/Header';
 import { GridStatusCard } from '@/components/features/GridStatusCard';
 import { PriceChart } from '@/components/features/PriceChart';
 import { FlexCard } from '@/components/features/FlexCard';
@@ -15,16 +17,10 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-950">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 p-4 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-white mb-2">Live Grid</h1>
-          <p className="text-slate-400 text-sm">Real-time energy settlement and flex opportunities</p>
-        </div>
-      </div>
+      <Header />
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto p-4 space-y-6 pb-20">
+      <main className="max-w-4xl mx-auto p-4 space-y-6 pt-20">
         {/* Grid Status */}
         <div>
           <h2 className="text-lg font-semibold text-white mb-3">Grid Status</h2>
@@ -63,26 +59,7 @@ export default function DashboardPage() {
             View Asset Map →
           </Link>
         </div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around items-center h-16">
-        <button className="flex-1 flex flex-col items-center justify-center py-2 text-emerald-500 border-b-2 border-emerald-500">
-          <span className="text-xl">🏠</span>
-          <span className="text-xs font-medium mt-1">Home</span>
-        </button>
-        <Link
-          href="/map"
-          className="flex-1 flex flex-col items-center justify-center py-2 text-slate-400 hover:text-white transition-colors"
-        >
-          <span className="text-xl">🗺️</span>
-          <span className="text-xs font-medium mt-1">Map</span>
-        </Link>
-        <button className="flex-1 flex flex-col items-center justify-center py-2 text-slate-400 hover:text-white transition-colors">
-          <span className="text-xl">👤</span>
-          <span className="text-xs font-medium mt-1">Profile</span>
-        </button>
-      </nav>
+      </main>
     </div>
   );
 }
