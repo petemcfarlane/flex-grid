@@ -13,17 +13,17 @@ export default function MapPage() {
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="h-screen bg-slate-950 flex flex-col">
       <Header />
 
       {/* Map Area */}
-      <main className="flex-1 flex gap-4 p-4 max-w-4xl mx-auto w-full min-h-0 pt-20">
-        <div className="flex-1 rounded-lg overflow-hidden bg-slate-900 border border-slate-800">
-          <MapboxMap />
+      <main className="flex-1 flex flex-col lg:flex-row gap-4 p-4 max-w-4xl mx-auto w-full overflow-hidden pt-20">
+        <div className="w-full h-64 lg:flex-1 lg:h-auto rounded-lg overflow-hidden bg-slate-900 border border-slate-800 flex-shrink-0 lg:sticky lg:top-0">
+          <MapboxMap assets={assets} />
         </div>
 
         {/* Assets Panel */}
-        <div className="w-80 flex flex-col">
+        <div className="w-full lg:w-80 flex flex-col">
           <div className="mb-3">
             <h2 className="text-lg font-semibold text-white">Managed Assets</h2>
             <p className="text-xs text-slate-400">
