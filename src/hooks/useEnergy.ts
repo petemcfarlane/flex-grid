@@ -11,15 +11,14 @@ export function useGridStatus() {
     queryKey: ['grid-status'],
     queryFn: async (): Promise<GridStatus> => {
       try {
-        const response = await axios.get(
-          'https://api.carbonintensity.org/intensity'
-        );
-        const data = response.data.data;
+        const response = await axios.get('/api/grid-status');
+        const data = response.data?.data || response.data;
+        const intensity = data?.intensity?.actual || data?.actual || 150;
         return {
-          intensity: data.intensity.actual,
-          carbonIntensity: data.intensity.actual,
-          status: data.intensity.actual > 300 ? 'high' : data.intensity.actual > 200 ? 'moderate' : 'low',
-          generationmix: data.generationmix || [],
+          intensity,
+          carbonIntensity: intensity,
+          status: intensity > 300 ? 'high' : intensity > 200 ? 'moderate' : 'low',
+          generationmix: data?.generationmix || [],
         };
       } catch (error) {
         // Fallback if API is unavailable
