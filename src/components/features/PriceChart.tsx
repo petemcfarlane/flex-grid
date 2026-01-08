@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  ReferenceLine,
 } from 'recharts';
 import { SettlementPeriod } from '@/types/energy';
 import { getCurrentPeriod } from '@/mocks/data';
@@ -41,29 +42,45 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export const PriceChart: React.FC<PriceChartProps> = ({ data }) => {
-  const currentPeriod = getCurrentPeriod();
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentPeriodIndex = currentHour * 2 + (currentMinute >= 30 ? 1 : 0);
 
-  // Transform data for Recharts - group into hours instead of 30-min periods for readability
-  const chartData = [];
-  for (let i = 0; i < data.length; i += 2) {
-    const period1 = data[i];
-    const period2 = data[i + 1];
-    const avgCost = (period1.cost + (period2?.cost || period1.cost)) / 2;
-    const periodNum = Math.floor(i / 2) + 1;
-
-    chartData.push({
-      time: period1.time,
-      cost: Math.round(avgCost * 100) / 100,
-      isCurrent: Math.floor(currentPeriod / 2) === periodNum,
-      periodStart: period1.period,
+  // Find the current period in the data based on timestamp
+  let currentDataIndex = currentPeriodIndex; // Default fallback to calculated index
+  if (data[0]?.timestamp) {
+    const nowTimestamp = now.getTime();
+    const foundIndex = data.findIndex((period, index) => {
+      const periodTime = new Date(period.timestamp!).getTime();
+      const nextPeriodTime = data[index + 1] ? new Date(data[index + 1].timestamp!).getTime() : Infinity;
+      return nowTimestamp >= periodTime && nowTimestamp < nextPeriodTime;
     });
+    if (foundIndex !== -1) currentDataIndex = foundIndex;
   }
+
+  // Show 12 hours (24 periods) before and after current time for rolling 24-hour window
+  const startIndex = Math.max(0, currentDataIndex - 24);
+  const endIndex = Math.min(data.length, currentDataIndex + 24);
+  const visibleData = data.slice(startIndex, endIndex);
+
+  // Use all visible half-hourly periods directly
+  const chartData = visibleData.map((period, index) => ({
+    time: period.time,
+    cost: period.cost,
+    isCurrent: startIndex + index === currentDataIndex,
+    period: period.period,
+  }));
+
+  // Find the current period's time for the reference line
+  const currentBarIndex = currentDataIndex - startIndex;
+  const currentBarTime = chartData[currentBarIndex]?.time;
 
   const getBarColor = (item: any) => {
     if (item.isCurrent) return '#10b981'; // Emerald for current
     if (item.cost < 10) return '#3b82f6'; // Blue for cheap
     if (item.cost > 20) return '#f97316'; // Orange for expensive
-    return '#60a5fa'; // Light blue for normal
+    return '#64748b'; // Slate grey for normal
   };
 
   return (
@@ -73,8 +90,8 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data }) => {
           <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
           <XAxis
             dataKey="time"
-            tick={{ fill: '#cbd5e1', fontSize: 12 }}
-            interval={3}
+            tick={{ fill: '#cbd5e1', fontSize: 10 }}
+            interval={5}
           />
           <YAxis
             label={{ value: 'p/kWh', angle: -90, position: 'insideLeft', dx: -10 }}
@@ -88,6 +105,13 @@ export const PriceChart: React.FC<PriceChartProps> = ({ data }) => {
               <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
             ))}
           </Bar>
+          <ReferenceLine 
+            x={currentBarTime}
+            stroke="#10b981"
+            strokeDasharray="3 3"
+            strokeWidth={2}
+            label={{ value: 'Now', position: 'top', fill: '#10b981', fontSize: 12 }}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>
