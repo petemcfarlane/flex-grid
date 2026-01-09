@@ -39,9 +39,9 @@ export default function MapPage() {
       <Header />
 
       {/* Map Area */}
-      <main className="flex-1 flex flex-col lg:flex-row gap-4 p-4 max-w-4xl mx-auto w-full overflow-hidden pt-20">
+      <main className="flex-1 flex flex-col lg:flex-row gap-4 p-4 max-w-4xl mx-auto w-full pt-20 overflow-y-auto lg:overflow-hidden">
         <div className="w-full h-64 lg:flex-1 lg:h-auto rounded-lg overflow-hidden bg-slate-900 border border-slate-800 flex-shrink-0 lg:sticky lg:top-0 relative">
-          <MapboxMap assets={assets} showRegions={showRegions} regionalData={regionalData} />
+          <MapboxMap assets={assets || []} showRegions={showRegions} regionalData={regionalData} />
 
           {/* Show Regions Button */}
           <button
@@ -54,15 +54,15 @@ export default function MapPage() {
         </div>
 
         {/* Assets Panel */}
-        <div className="w-full lg:w-80 flex flex-col">
-          <div className="mb-3">
+        <div className="w-full lg:w-80 flex flex-col lg:min-h-0">
+          <div className="mb-3 flex-shrink-0">
             <h2 className="text-lg font-semibold text-white">Managed Assets</h2>
             <p className="text-xs text-slate-400">
               {assets?.length || 0} connected devices
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+          <div className="flex-1 lg:overflow-y-auto space-y-3 pr-2 lg:min-h-0">
             {isLoading ? (
               <Card className="animate-pulse h-20" />
             ) : assets && assets.length > 0 ? (
