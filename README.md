@@ -270,7 +270,19 @@ To test PWA offline mode:
 4. **Hooks:** Create query/mutation hooks in `/src/hooks/useEnergy.ts`
 5. **Testing:** Use `npm run build` to catch TypeScript errors early
 
-## 📊 Roadmap
+## � Known Issues
+
+### Critical
+- **Map: Asset markers disappear when regions shown** - Markers remain in DOM but are covered by GeoJSON layers. z-index and layer ordering attempted but issue persists. Needs investigation into Mapbox layer/marker rendering order.
+
+### High Priority
+- **Mobile: Asset list scroll broken** - On `/map` page in mobile view, the Managed Assets panel scroll is not working correctly. Users cannot scroll through the full asset list.
+- **Postcode validation: Full postcodes rejected** - Grid Status postcode input only accepts outward codes (e.g., "SW1A"). Full postcodes with inward codes (e.g., "SW1A 1AA") return errors from the API. Need to strip the inward code (last part after space) before API call.
+
+### Medium Priority
+- None currently
+
+## �📊 Roadmap
 
 - [x] **Real API integrations:** Carbon Intensity UK, Octopus Agile Tariff
 - [x] **GeoJSON DNO regions** with dynamic carbon intensity coloring
