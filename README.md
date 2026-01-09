@@ -110,16 +110,81 @@ npm start
 
 ### Dashboard Page (/)
 - **Grid Status Card:** Real-time carbon intensity from UK Carbon Intensity API
-- **Price Chart:** 48 half-hourly settlement periods with dynamic pricing (5p–35p/kWh)
+  - **Postcode Input:** Submit-on-Enter regional carbon intensity lookup
+  - **Generation Mix Visualization:** Horizontal stacked bar chart showing fuel source breakdown
+    - Built with Recharts BarChart component
+    - Color-coded by fuel type (wind=sky blue, solar=amber, nuclear=violet, gas=red, coal=grey)
+    - Custom tooltip with fuel name and percentage on hover
+    - Ordered consistently: wind → solar → nuclear → hydro → biomass → imports → gas → coal → other
+    - Displays renewable percentage badge above chart
+    - Compact design with rounded corners on bar segments
+- **Price Chart:** 48 half-hourly settlement periods with real Octopus Agile tariff data
+  - Rolling 24-hour window with actual API integration
+  - Tariff selector UI showing current tariff (future: change tariff capability)
 - **Current Period Highlighting:** Visual indicator of current trading period
 - **Flex Opportunity Card:** Prominent CTA for demand-side response events
-- **Opt-In Toast:** Confirmation notification on flex event acceptance
+- **Opt-In Toast:** Custom context-based toast notification system on flex event acceptance
 
 ### Asset Map Page (/map)
-- **Mapbox GL Map:** Interactive map centered on London region
+- **Mapbox GL Map:** Interactive map with UK regional carbon intensity visualization
+  - **GeoJSON Region Boundaries:** Real UK DNO (Distribution Network Operator) licence areas
+    - Source: NESO (National Energy System Operator) official boundaries
+    - Downloaded from: https://www.neso.energy/data-portal/gis-boundaries-gb-dno-license-areas
+    - Coordinate conversion: OSGB36 (British National Grid) → WGS84 using pyproj
+    - 14 regions covering England, Scotland, and Wales
+  - **Dynamic Carbon Intensity Coloring:**
+    - Feature-state based styling using Mapbox GL expressions
+    - Green (very low/low): Scotland, NW England
+    - Grey (moderate): Midlands, central regions
+    - Orange/Amber (high/very high): South Wales, SW England
+    - Colors update in real-time based on API data
+    - Region name mapping between API (DNO names) and GeoJSON (Area names)
+  - **Regional Labels:** Color-coded badges at region centroids showing shortnames
+  - Show/Hide Regions toggle button (top-left)
 - **Managed Assets Panel:** List of connected devices (EV, Heat Pump, Battery, Solar)
 - **Asset Controls:** Toggle switches and status badges
 - **Responsive Layout:** Side-by-side map + assets on desktop, stacked on mobile
+
+### Technical Implementation Notes
+
+#### Generation Mix Chart
+The horizontal stacked bar chart is implemented using:
+```tsx
+<BarChart layout="horizontal" height={40}>
+  <Bar dataKey="percentage" stackId="a" radius={[10, 10, 10, 10]}>
+    {data.map((entry, index) => (
+      <Cell key={`cell-${index}`} fill={entry.color} />
+    ))}
+  </Bar>
+  <Tooltip content={<CustomTooltip />} />
+</BarChart>
+```
+- Uses Recharts with custom cell colors for each fuel type
+- Tooltip shows fuel name and percentage
+- Layout set to horizontal for compact vertical display
+
+#### GeoJSON Regional Boundaries
+The region visualization pipeline:
+1. **Data Source:** NESO GB DNO License Areas GeoJSON (2024)
+2. **Coordinate Transformation:**
+   ```python
+   # Convert OSGB36 to WGS84
+   from pyproj import Transformer
+   transformer = Transformer.from_crs("EPSG:27700", "EPSG:4326", always_xy=True)
+   lon, lat = transformer.transform(x, y)
+   ```
+3. **Feature ID Assignment:** Add top-level `id` field to each feature (required for Mapbox feature-state)
+4. **Layer Structure:**
+   - `region-fill`: Fill layer with feature-state color expressions
+   - `region-outline`: Line layer with matching colors (darker shades)
+   - Layers inserted before symbol layers to appear under labels
+5. **Feature State Updates:**
+   ```tsx
+   map.setFeatureState(
+     { source: 'region-boundaries', id: featureId },
+     { intensity: 'very low' | 'low' | 'moderate' | 'high' | 'very high' }
+   );
+   ```
 
 ## 🧪 Mock Data Architecture
 
@@ -148,9 +213,26 @@ All API calls are mocked for rapid iteration:
 
 Uses **TanStack Query v5** for:
 - Real-time grid status polling (30s interval)
-- Tariff data fetching (1m cache)
+- Regional carbon intensity data (postcode-based lookup)
+- Tariff data fetching (1m cache) - **Real Octopus Agile API integration**
 - Asset management queries
 - Flex opt-in mutations with optimistic updates
+
+### Real API Integrations
+- **Carbon Intensity UK API:**
+  - `/intensity` - National carbon intensity
+  - `/generation` - Current generation mix by fuel type
+  - `/regional` - All 14 UK DNO regions
+  - `/regional/postcode/{postcode}` - Postcode-specific regional data
+- **Octopus Energy API:**
+  - `v1/products/AGILE-FLEX-22-11-25/electricity-tariffs/E-1R-AGILE-FLEX-22-11-25-A/standard-unit-rates/`
+  - Returns 48 half-hourly periods with actual pricing
+  - Proxied through Next.js API routes to avoid CORS
+
+### API Proxy Routes
+- `/api/grid-status` - Carbon Intensity national data
+- `/api/regional-status` - All regional carbon intensity
+- `/api/tariff-rates` - Octopus Agile pricing (48 periods)
 
 ### Mock Mutations
 - `useFlexOptIn()` - Simulate flex event acceptance
@@ -190,8 +272,13 @@ To test PWA offline mode:
 
 ## 📊 Roadmap
 
-- [ ] **Replace Mapbox placeholders** with real GeoJSON DNO regions
-- [ ] **Connect to real APIs:** Octopus Energy, Agile Tariff, DNO APIs
+- [x] **Real API integrations:** Carbon Intensity UK, Octopus Agile Tariff
+- [x] **GeoJSON DNO regions** with dynamic carbon intensity coloring
+- [x] **Generation mix visualization** with horizontal stacked bar chart
+- [x] **Postcode-based regional lookup**
+- [x] **Custom toast notification system**
+- [ ] **Fix marker visibility** when regions overlay is active (z-index/layer ordering)
+- [ ] **Connect to more real APIs:** DNO-specific APIs, additional tariff providers
 - [ ] **Implement real GraphQL server** for asset management
 - [ ] **Add authentication** (OAuth, multi-tenant)
 - [ ] **Form validation & input sanitization**
@@ -199,6 +286,7 @@ To test PWA offline mode:
 - [ ] **Accessibility audit** (a11y improvements)
 - [ ] **WebSocket integration** for sub-second telemetry
 - [ ] **Advanced filtering & sorting** in asset list
+- [ ] **Tariff comparison and selection** UI
 
 ## 🏗 Accessibility (a11y)
 
