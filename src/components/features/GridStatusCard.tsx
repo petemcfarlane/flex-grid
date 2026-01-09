@@ -131,28 +131,30 @@ export const GridStatusCard: React.FC<GridStatusCardProps> = ({ status, isLoadin
         const bIndex = fuelOrder.indexOf(b.fuel);
         return aIndex - bIndex;
       });
-    const chartData = [
-      { name: 'Generation Mix', ...Object.fromEntries(sortedMix.map(g => [g.fuel, g.perc])) }
-    ];
+    
+    // Create single row data with all fuels as separate properties
+    const rowData = { mix: 'Generation' };
+    sortedMix.forEach(item => {
+      (rowData as any)[item.fuel] = item.perc;
+    });
 
     return (
       <div className="space-y-2">
         <ResponsiveContainer width="100%" height={40}>
           <BarChart
-            data={chartData}
+            data={[rowData]}
             layout="vertical"
             margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
           >
             <XAxis type="number" hide domain={[0, 100]} />
-            <YAxis type="category" dataKey="name" hide />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(51, 65, 85, 0.5)' }} />
+            <YAxis type="category" dataKey="mix" hide />
+            <Tooltip content={<CustomTooltip />} cursor={false} />
             {sortedMix.map((item, index) => (
               <Bar
                 key={item.fuel}
                 dataKey={item.fuel}
-                stackId="fuel"
+                stackId="a"
                 fill={fuelColors[item.fuel] || '#9ca3af'}
-                isAnimationActive={false}
                 onMouseEnter={() => setHoveredFuel(item.fuel)}
                 onMouseLeave={() => setHoveredFuel(null)}
                 radius={index === 0 ? [6, 0, 0, 6] : index === sortedMix.length - 1 ? [0, 6, 6, 0] : [0, 0, 0, 0]}
@@ -189,7 +191,9 @@ export const GridStatusCard: React.FC<GridStatusCardProps> = ({ status, isLoadin
             onChange={(e) => setPostcodeInput(e.target.value.toUpperCase())}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && postcodeInput) {
-                setSubmittedPostcode(postcodeInput);
+                // Strip inward code (last part after space) - API only accepts outward code
+                const outwardCode = postcodeInput.trim().split(/\s+/)[0];
+                setSubmittedPostcode(outwardCode);
               }
             }}
             className="flex-1 px-3 py-2 bg-slate-700 text-white text-sm rounded border border-slate-600 focus:outline-none focus:border-emerald-500 min-w-0"
@@ -198,7 +202,9 @@ export const GridStatusCard: React.FC<GridStatusCardProps> = ({ status, isLoadin
             <button
               onClick={() => {
                 if (postcodeInput) {
-                  setSubmittedPostcode(postcodeInput);
+                  // Strip inward code (last part after space) - API only accepts outward code
+                  const outwardCode = postcodeInput.trim().split(/\s+/)[0];
+                  setSubmittedPostcode(outwardCode);
                 }
               }}
               disabled={!postcodeInput || regionalLoading}
