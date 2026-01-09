@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { config } from '@/lib/config';
@@ -10,21 +10,22 @@ interface MapboxMapProps {
   center?: [number, number];
   zoom?: number;
   assets?: Asset[];
-  showRegions?: boolean;
   regionalData?: any;
+  focusAssetId?: string | null;
 }
 
 export const MapboxMap: React.FC<MapboxMapProps> = ({
   center = [-0.1278, 51.5074], // London
   zoom = 10,
   assets = [],
-  showRegions = false,
   regionalData = null,
+  focusAssetId = null,
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const regionMarkersRef = useRef<mapboxgl.Marker[]>([]);
+  const [mapLoaded, setMapLoaded] = useState<boolean>(false);
 
   // Approximate region centroids for label placement (using shortnames)
   const regionCentroids: Record<string, [number, number]> = {
@@ -99,6 +100,11 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
       attributionControl: false,
     });
 
+    // Wait for map to load before allowing layer additions
+    map.current.on('load', () => {
+      setMapLoaded(true);
+    });
+
     // Add navigation controls
     map.current.addControl(new mapboxgl.NavigationControl());
 
@@ -111,7 +117,7 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
         }
       }
     };
-  }, [center, zoom]);
+  }, []); // Only initialize once on mount
 
   // Add markers for assets
   useEffect(() => {
@@ -128,6 +134,7 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
       el.innerHTML = getAssetIcon(asset.type);
       el.style.fontSize = '24px';
       el.style.cursor = 'pointer';
+      el.style.zIndex = '1000'; // Ensure markers appear above map layers
 
       const marker = new mapboxgl.Marker({
         element: el,
@@ -148,8 +155,8 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
       markersRef.current.push(marker);
     });
 
-    // Fit map to show all markers
-    if (assets.length > 0) {
+    // Fit map to show all markers (only on initial load)
+    if (assets.length > 0 && !focusAssetId) {
       const bounds = assets.reduce(
         (bounds, asset) => {
           return bounds.extend([asset.location.lng, asset.location.lat]);
@@ -163,15 +170,35 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
     }
   }, [assets]);
 
+  // Focus on specific asset when selected
+  useEffect(() => {
+    if (!map.current || !focusAssetId) return;
+
+    const asset = assets.find(a => a.id === focusAssetId);
+    if (!asset) return;
+
+    // Fly to the asset location
+    map.current.flyTo({
+      center: [asset.location.lng, asset.location.lat],
+      zoom: 14,
+      duration: 1500,
+      essential: true
+    });
+
+    // Open the marker's popup
+    const marker = markersRef.current.find((m, idx) => assets[idx]?.id === focusAssetId);
+    if (marker) {
+      marker.togglePopup();
+    }
+  }, [focusAssetId, assets]);
+
   // Add/remove region labels and update colors
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || !mapLoaded || !regionalData) return;
 
     // Clear existing region markers
     regionMarkersRef.current.forEach((marker) => marker.remove());
     regionMarkersRef.current = [];
-
-    if (!showRegions || !regionalData) return;
 
     // Get regions from the nested structure
     const regions = regionalData.data?.[0]?.regions || [];
@@ -232,11 +259,19 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
             data: geoJsonData
           });
 
-          // Add fill layer for regions FIRST (so it's below outlines)
+          // Find the first symbol layer (labels) to insert before it
+          // This keeps regions visible but under labels and markers
+          const layers = map.current.getStyle().layers;
+          const firstSymbolLayerId = layers?.find((layer: any) => layer.type === 'symbol')?.id;
+
+          // Add fill layer for regions
           map.current.addLayer({
             id: 'region-fill',
             type: 'fill',
             source: 'region-boundaries',
+            layout: {
+              'visibility': 'visible'
+            },
             paint: {
               'fill-color': [
                 'case',
@@ -254,13 +289,16 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
               ],
               'fill-opacity': 0.55
             }
-          });
+          }, firstSymbolLayerId);
 
           // Add outline layer for regions
           map.current.addLayer({
             id: 'region-outline',
             type: 'line',
             source: 'region-boundaries',
+            layout: {
+              'visibility': 'visible'
+            },
             paint: {
               'line-color': [
                 'case',
@@ -279,7 +317,9 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
               'line-width': 2.5,
               'line-opacity': 0.8
             }
-          });
+          }, firstSymbolLayerId);
+
+          console.log('Region layers added with fill and outline');
         }
 
         // Now update feature states
@@ -317,51 +357,9 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
       }
     };
 
-    // Initialize layers and add region labels
+    // Initialize layers
     initializeRegionLayers();
-
-    // Add region labels at centroids
-    regions.forEach((region: any) => {
-      if (region.regionid > 14) return;
-
-      const coords = regionCentroids[region.shortname] || [-2, 54];
-      const intensity = region.intensity?.index || 'moderate';
-      const isLow = intensity === 'low' || intensity === 'very low';
-      const isHigh = intensity === 'high' || intensity === 'very high';
-
-      const el = document.createElement('div');
-      el.className = 'region-label';
-      el.innerHTML = `<div style="
-        background: ${isLow ? 'rgb(16, 185, 129)' : isHigh ? 'rgb(249, 115, 22)' : 'rgb(100, 116, 139)'};
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 11px;
-        font-weight: 600;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        max-width: 60px;
-        white-space: normal;
-      ">${region.shortname}</div>`;
-      el.style.cursor = 'default';
-
-      const marker = new mapboxgl.Marker({
-        element: el,
-      })
-        .setLngLat(coords as [number, number])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 15 }).setHTML(`
-            <div style="background-color: #1e293b; color: #ffffff; font-family: system-ui; padding: 8px;">
-              <h4 style="margin: 0 0 4px 0; font-size: 13px;">${region.shortname}</h4>
-              <p style="margin: 0; font-size: 12px;">${region.intensity?.actual || '—'} gCO₂/kWh</p>
-            </div>
-          `)
-        )
-        .addTo(map.current!);
-
-      regionMarkersRef.current.push(marker);
-    });
-  }, [showRegions, regionalData, regionCentroids]);
+  }, [regionalData, regionCentroids, mapLoaded]);
 
   return (
     <div

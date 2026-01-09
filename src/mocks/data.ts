@@ -51,7 +51,7 @@ export const mockAssets: Asset[] = [
     name: 'Heat Pump - 2 Haymarket',
     type: 'heat_pump',
     status: 'optimized',
-    location: { lat: 51.5051, lng: -0.1296 },
+    location: { lat: 51.5051, lng: -0.1296 }, // London
     power: 3.2,
   },
   {
@@ -59,7 +59,7 @@ export const mockAssets: Asset[] = [
     name: 'Home Battery Storage',
     type: 'battery',
     status: 'idle',
-    location: { lat: 51.5135, lng: -0.1204 },
+    location: { lat: 51.5135, lng: -0.1204 }, // London
     soc: 45,
   },
   {
@@ -67,8 +67,26 @@ export const mockAssets: Asset[] = [
     name: 'Roof Solar Array',
     type: 'solar',
     status: 'idle',
-    location: { lat: 51.5200, lng: -0.1250 },
+    location: { lat: 51.5200, lng: -0.1250 }, // London
     power: 0,
+  },
+  {
+    id: 'ev-manchester',
+    name: 'Nissan Leaf',
+    type: 'ev',
+    status: 'idle',
+    location: { lat: 53.4808, lng: -2.2426 }, // Manchester
+    power: 6.6,
+    soc: 82,
+  },
+  {
+    id: 'battery-cardiff',
+    name: 'Powerwall - Cardiff',
+    type: 'battery',
+    status: 'charging',
+    location: { lat: 51.4816, lng: -3.1791 }, // Cardiff, Wales
+    power: 5.0,
+    soc: 58,
   },
 ];
 
