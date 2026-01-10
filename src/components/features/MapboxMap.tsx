@@ -221,7 +221,13 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
       'UKPN South East': 'South East England',
     };
 
-    const regionIntensityMap = new Map(
+    interface RegionIntensityData {
+      intensity: string;
+      carbon: number;
+      shortname: string;
+    }
+
+    const regionIntensityMap = new Map<string, RegionIntensityData>(
       regions
         .filter((region: any) => region.regionid <= 14)
         .map((region: any) => [
@@ -350,7 +356,7 @@ export const MapboxMap: React.FC<MapboxMapProps> = ({
           if (intensityData && featureId !== undefined) {
             map.current!.setFeatureState(
               { source: 'region-boundaries', id: featureId },
-              { intensity: intensityData.intensity } as Record<string, any>
+              { intensity: intensityData.intensity }
             );
           }
         });

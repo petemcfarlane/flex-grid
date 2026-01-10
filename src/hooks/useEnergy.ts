@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import { GridStatus, Asset, FlexOpportunity } from '@/types/energy';
+import { GridStatus, Asset, FlexOpportunity, SettlementPeriod } from '@/types/energy';
 import { generateMockTariff, mockAssets, mockFlexOpportunities } from '@/mocks/data';
 
 /**
