@@ -27,11 +27,11 @@ This project is a technical proof-of-concept for managing energy assets within a
 ## 🛠 Tech Stack
 
 * **Framework:** Next.js 16 (App Router), TypeScript, Tailwind CSS.
-* **State & Sync:** TanStack Query v5 for robust server-state management.
+* **State & Sync:** TanStack Query v5 for server-state management; **RxDB** for local-first offline storage.
 * **Visuals:** Recharts for time-series data; Mapbox GL for regional mapping.
 * **PWA & Theming:** next-pwa for offline support; next-themes for dark mode; react-hot-toast for notifications.
 * **UI Components:** Custom accessible component library (Button, Card, Badge) built on Tailwind CSS.
-* **Additional:** Zustand for client state (optional), Axios for HTTP requests.
+* **Additional:** RxJS for reactive data streams, Axios for HTTP requests.
 
 ## 📁 Project Structure
 
@@ -340,7 +340,49 @@ Current state:
 
 As the codebase stabilizes and features are finalized, these testing layers will be progressively implemented, starting with critical path unit and integration tests.
 
-## 🔄 Contributing
+## � Local-First Data Architecture
+
+This project uses **RxDB** for offline-first data persistence, enabling instant interactions and multi-tab synchronization. This paradigm shift means:
+
+- **No Loading Spinners:** All data operations happen against local IndexedDB with near-zero latency
+- **Multi-Tab Sync:** All browser tabs share the same state automatically
+- **Offline Works:** Full functionality with cached data when internet is unavailable
+- **Realtime Updates:** Data subscriptions enable automatic UI updates when data changes anywhere
+
+### Current Implementation
+
+**Collections:**
+1. **`preferences`** - User settings stored locally
+   - Postcode: Persisted automatically when user enters it
+   - Theme: Dark/Light mode preference (future)
+   - Auto-loaded on app startup
+
+2. **`tariffs`** - Cached half-hourly pricing data
+   - Date-keyed (YYYY-MM-DD format)
+   - 1-hour TTL for cache validation
+   - Ready to extend with historical data for 7-14 day price comparisons
+
+### Usage Example
+
+```typescript
+// Load cached postcode on app startup
+const { postcode, savePostcode } = usePreferences();
+
+// User enters postcode in GridStatusCard
+await savePostcode('SW1A');  // Saved to IndexedDB instantly
+
+// Next session: postcode auto-loads from local storage
+```
+
+### Future Enhancements
+
+- **Tariff History:** Cache 7-14 days of pricing for historical comparison
+- **Assets Periodic Sync:** Asset list with TTL-based refresh
+- **GeoJSON Simplification:** Compress and cache region boundaries (currently 3MB)
+- **HTTP Replication:** Two-way sync with backend for changes
+- **Conflict Resolution:** Handle multi-device/multi-tab scenarios
+
+## �🔄 Contributing
 
 1. Create a feature branch: `git checkout -b feature/your-feature`
 2. Make changes and test locally

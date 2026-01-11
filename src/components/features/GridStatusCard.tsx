@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Badge } from '@/components/ui';
 import { GridStatus } from '@/types/energy';
 import { useRegionalStatus } from '@/hooks/useEnergy';
+import { usePreferences } from '@/hooks/useDatabase';
 import {
   BarChart,
   Bar,
@@ -27,7 +28,15 @@ export const GridStatusCard: React.FC<GridStatusCardProps> = ({ status, isLoadin
   const [postcodeInput, setPostcodeInput] = useState('');
   const [submittedPostcode, setSubmittedPostcode] = useState<string | undefined>(undefined);
   const [hoveredFuel, setHoveredFuel] = useState<string | null>(null);
+  const { postcode: cachedPostcode, savePostcode } = usePreferences();
   const { data: regionalData, isLoading: regionalLoading } = useRegionalStatus(submittedPostcode);
+
+  // Load cached postcode on mount
+  useEffect(() => {
+    if (cachedPostcode) {
+      setPostcodeInput(cachedPostcode);
+    }
+  }, [cachedPostcode]);
   if (isLoading) {
     return (
       <Card className="animate-pulse">
@@ -189,10 +198,15 @@ export const GridStatusCard: React.FC<GridStatusCardProps> = ({ status, isLoadin
             placeholder="Postcode (e.g., LA10)"
             value={postcodeInput}
             onChange={(e) => setPostcodeInput(e.target.value.toUpperCase())}
-            onKeyDown={(e) => {
+            onKeyDown={async (e) => {
               if (e.key === 'Enter' && postcodeInput) {
                 // Strip inward code (last part after space) - API only accepts outward code
                 const outwardCode = postcodeInput.trim().split(/\s+/)[0];
+                try {
+                  await savePostcode(outwardCode);
+                } catch (error) {
+                  console.error('Failed to save postcode:', error);
+                }
                 setSubmittedPostcode(outwardCode);
               }
             }}
@@ -200,10 +214,15 @@ export const GridStatusCard: React.FC<GridStatusCardProps> = ({ status, isLoadin
           />
           <div className="flex gap-2">
             <button
-              onClick={() => {
+              onClick={async () => {
                 if (postcodeInput) {
                   // Strip inward code (last part after space) - API only accepts outward code
                   const outwardCode = postcodeInput.trim().split(/\s+/)[0];
+                  try {
+                    await savePostcode(outwardCode);
+                  } catch (error) {
+                    console.error('Failed to save postcode:', error);
+                  }
                   setSubmittedPostcode(outwardCode);
                 }
               }}
