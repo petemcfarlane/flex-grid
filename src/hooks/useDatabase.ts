@@ -3,34 +3,65 @@ import { getDatabase, PreferencesDoc, TariffDoc } from '@/lib/db';
 
 /**
  * Hook to manage user preferences (postcode, theme) with RxDB persistence
+ * Subscribes to database changes for real-time multi-tab synchronization
  */
 export function usePreferences() {
   const [postcode, setPostcode] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
-  // Load preferences on mount
+  // Subscribe to preferences changes for multi-tab sync
   useEffect(() => {
-    const loadPreferences = async () => {
+    let subscription: any = null;
+    let channel: BroadcastChannel | null = null;
+
+    const setupSubscription = async () => {
       try {
         const db = await getDatabase();
         
-        // Try to find existing preferences document
-        const docs = await db.preferences.find().exec();
-        
-        if (docs.length > 0) {
-          const prefs = docs[0] as PreferencesDoc;
-          if (prefs.postcode) {
-            setPostcode(prefs.postcode);
-          }
+        // Subscribe to the observable for real-time updates across tabs
+        subscription = db.preferences
+          .find()
+          .$ // Get the observable
+          .subscribe((docs: PreferencesDoc[]) => {
+            if (docs.length > 0) {
+              // Set postcode even if empty (enables national mode sync across tabs)
+              setPostcode(docs[0].postcode || '');
+            } else {
+              setPostcode('');
+            }
+            setLoading(false);
+          });
+
+        // Listen for BroadcastChannel messages from other tabs
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          channel = new BroadcastChannel('flexgrid-prefs');
+          channel.addEventListener('message', async (event) => {
+            if (event.data.type === 'postcode-changed') {
+              // Force re-fetch from database
+              const docs = await db.preferences.find().exec();
+              if (docs.length > 0) {
+                setPostcode(docs[0].postcode || '');
+              }
+            }
+          });
         }
       } catch (error) {
-        console.error('Failed to load preferences:', error);
-      } finally {
+        console.error('Failed to subscribe to preferences:', error);
         setLoading(false);
       }
     };
 
-    loadPreferences();
+    setupSubscription();
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+      if (channel) {
+        channel.close();
+      }
+    };
   }, []);
 
   // Save postcode to RxDB
@@ -52,8 +83,20 @@ export function usePreferences() {
         // Insert new document
         await db.preferences.insert(prefsData);
       }
-
-      setPostcode(newPostcode);
+      
+      // Notify other tabs via BroadcastChannel
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        try {
+          const channel = new BroadcastChannel('flexgrid-prefs');
+          channel.postMessage({ type: 'postcode-changed', postcode: newPostcode });
+          channel.close();
+        } catch (error) {
+          console.error('Failed to send BroadcastChannel message:', error);
+        }
+      }
+      
+      // Don't manually set postcode - let observable update it
+      // This ensures multi-tab sync works correctly
     } catch (error) {
       console.error('Failed to save postcode:', error);
       throw error;

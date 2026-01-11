@@ -28,15 +28,23 @@ export const GridStatusCard: React.FC<GridStatusCardProps> = ({ status, isLoadin
   const [postcodeInput, setPostcodeInput] = useState('');
   const [submittedPostcode, setSubmittedPostcode] = useState<string | undefined>(undefined);
   const [hoveredFuel, setHoveredFuel] = useState<string | null>(null);
-  const { postcode: cachedPostcode, savePostcode } = usePreferences();
+  const { postcode: cachedPostcode, savePostcode, loading: prefLoading } = usePreferences();
   const { data: regionalData, isLoading: regionalLoading } = useRegionalStatus(submittedPostcode);
 
-  // Load cached postcode on mount
+  // Sync cached postcode from RxDB observable
   useEffect(() => {
-    if (cachedPostcode) {
-      setPostcodeInput(cachedPostcode);
+    if (!prefLoading) {
+      if (cachedPostcode) {
+        // Postcode saved - sync to regional view
+        setPostcodeInput(cachedPostcode);
+        setSubmittedPostcode(cachedPostcode);
+      } else {
+        // Empty postcode - sync to national view
+        setPostcodeInput('');
+        setSubmittedPostcode(undefined);
+      }
     }
-  }, [cachedPostcode]);
+  }, [cachedPostcode, prefLoading]);
   if (isLoading) {
     return (
       <Card className="animate-pulse">
@@ -233,7 +241,13 @@ export const GridStatusCard: React.FC<GridStatusCardProps> = ({ status, isLoadin
             </button>
             {submittedPostcode && (
               <button
-                onClick={() => {
+                onClick={async () => {
+                  // Clear the postcode in RxDB too, so all tabs sync to national mode
+                  try {
+                    await savePostcode('');
+                  } catch (error) {
+                    console.error('Failed to clear postcode:', error);
+                  }
                   setSubmittedPostcode(undefined);
                   setPostcodeInput('');
                 }}
