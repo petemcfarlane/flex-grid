@@ -2,6 +2,8 @@
 
 **Modern consumer app bridging grid operational data with energy asset flexibility.**
 
+**🔗 [Live Demo](https://flex-grid-vert.vercel.app/)**
+
 A technical proof-of-concept demonstrating offline-first state management, real-time multi-tab synchronization, and progressive web app patterns in a real-world energy context.
 
 **Tech Stack:** Next.js 16 (App Router) | TypeScript | Tailwind CSS | TanStack Query v5 | RxDB | Mapbox GL | Recharts
