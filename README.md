@@ -308,6 +308,38 @@ Current state:
 - ✅ Keyboard navigation on toggles
 - ⚠️ Need: Color contrast review, screen reader testing, focus management
 
+## 🧪 Testing Strategy
+
+**Current State:** This is an early-stage prototype with no automated tests yet. However, testing is an important consideration for the next phase of development.
+
+**Recommended Testing Layers:**
+1. **Unit Tests (Vitest/Jest)**
+   - Hook logic: `useGridStatus()`, `useTariffData()`, `useManagedAssets()` - test data transformations and error handling
+   - Utility functions: tariff calculations, postcode validation, carbon intensity mappings
+   - Type definitions and data structure conformance
+
+2. **Integration Tests (Playwright/Cypress)**
+   - API proxy layer (`/api/grid-status`, `/api/regional-status`, `/api/tariff-rates`) - verify correct data forwarding and error fallbacks
+   - Map interactions: asset marker click-to-focus, region boundary rendering
+   - Navigation between pages (dashboard → map)
+
+3. **Component Tests (React Testing Library)**
+   - GridStatusCard: postcode input validation, tariff period selection, generation mix chart rendering
+   - AssetCard: asset state display, toggle interactions, status indicators
+   - MapboxMap: marker visibility, region layer visibility, geographic bounds
+
+4. **E2E Tests (Playwright)**
+   - Full user workflows: view grid status → look up postcode → click asset → navigate to map → focus on asset
+   - Offline behavior: PWA service worker activation, cached data fallbacks
+   - Real API integration vs. mock fallback scenarios
+
+5. **Data Pipeline Tests**
+   - GeoJSON coordinate transformation accuracy (OSGB36 → WGS84)
+   - Feature-state updates for region intensity coloring
+   - Tariff period calculations for half-hourly settlement
+
+As the codebase stabilizes and features are finalized, these testing layers will be progressively implemented, starting with critical path unit and integration tests.
+
 ## 🔄 Contributing
 
 1. Create a feature branch: `git checkout -b feature/your-feature`
