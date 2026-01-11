@@ -41,12 +41,10 @@ export async function getDatabase(): Promise<FlexGridDB> {
   }
 
   try {
-    let storage = getRxStorageLocalstorage();
-    
-    // Wrap storage with AJV validator (required when dev-mode is enabled)
-    if (typeof window !== 'undefined') {
-      storage = wrappedValidateAjvStorage({ storage });
-    }
+    // Get localStorage storage with AJV validation wrapper
+    const storage = wrappedValidateAjvStorage({
+      storage: getRxStorageLocalstorage(),
+    });
 
     const db = await createRxDatabase<FlexGridDB>({
       name: 'flexgrid',
