@@ -1,10 +1,12 @@
-import { createRxDatabase, RxDatabase } from 'rxdb';
-import { getRxStorageIndexeddb } from 'rxdb/plugins/storage-indexeddb';
-import { addRxPlugin } from 'rxdb/plugins/core';
+import { createRxDatabase, RxDatabase, addRxPlugin } from 'rxdb';
+import { getRxStorageLocalstorage } from 'rxdb/plugins/storage-localstorage';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
+import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 
-// Enable dev mode for better debugging
-addRxPlugin(RxDBDevModePlugin);
+// Enable dev mode for better debugging (browser only)
+if (typeof window !== 'undefined') {
+  addRxPlugin(RxDBDevModePlugin);
+}
 
 export interface PreferencesDoc {
   id: string;
@@ -23,19 +25,32 @@ export interface TariffDoc {
 export interface FlexGridDB extends RxDatabase {
   preferences: any;
   tariffs: any;
+  [key: string]: any;
 }
 
 let dbInstance: FlexGridDB | null = null;
 
 export async function getDatabase(): Promise<FlexGridDB> {
+  // Only run in browser
+  if (typeof window === 'undefined') {
+    throw new Error('RxDB can only be used in browser');
+  }
+
   if (dbInstance) {
     return dbInstance;
   }
 
   try {
+    let storage = getRxStorageLocalstorage();
+    
+    // Wrap storage with AJV validator (required when dev-mode is enabled)
+    if (typeof window !== 'undefined') {
+      storage = wrappedValidateAjvStorage({ storage });
+    }
+
     const db = await createRxDatabase<FlexGridDB>({
       name: 'flexgrid',
-      storage: getRxStorageIndexeddb(),
+      storage,
     });
 
     // Add preferences collection
